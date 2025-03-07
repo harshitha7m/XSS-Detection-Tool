@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Detection Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-image: url('https://th.bing.com/th/id/R.bc88c0e6f67aba1ebf5739d1b1dd34fb?rik=WrveH4yeOoKnPQ&riu=http%3a%2f%2fgetwallpapers.com%2fwallpaper%2ffull%2fa%2fd%2f1%2f1090522-best-cool-tech-backgrounds-2560x1600-for-iphone-5s.jpg&ehk=SkRUcgXIwtR5QYlNTfoxYBgnJBBV6OsHQIo14vZCX34%3d&risl=&pid=ImgRaw&r=0'); /* Change this */
+            background-size: cover;
+            background-position: center;
+            color: white; /* Adjust text color for readability */
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7); /* Dark overlay for readability */
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 50px;
+        }
+        input, button {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkblue;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>XSS Detection Tool</h2>
+        <p>Enter a website URL to check for possible XSS vulnerabilities.</p>
+
+        <input type="text" id="websiteURL" placeholder="Enter website URL (e.g., https://example.com)"><br>
+        <button onclick="checkWebsite()">Check for XSS</button>
+
+        <p id="result"></p>
+    </div>
+
+    <script>
+        async function checkWebsite() {
+            let url = document.getElementById("websiteURL").value;
+            let result = document.getElementById("result");
+
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                result.innerHTML = "⚠️ Please enter a valid URL (starting with http:// or https://).";
+                result.style.color = "red";
+                return;
+            }
+
+            try {
+                let response = await fetch(url, { mode: 'no-cors' });
+                let text = await response.text();
+
+                // Common XSS attack patterns
+                let xssPatterns = [
+                    /<script.*?>.*?<\/script>/gi,
+                    /on\w+\s*=\s*["'].*?["']/gi,
+                    /javascript:\s*[^'"]+/gi,
+                    /document\.cookie/gi,
+                    /document\.write/gi,
+                    /eval\(.+?\)/gi,
+                    /alert\(.+?\)/gi,
+                    /<iframe.*?>.*?<\/iframe>/gi,
+                    /<img.*?onerror\s*=\s*["'].*?["']>/gi
+                ];
+
+                let isXSS = xssPatterns.some(pattern => pattern.test(text));
+
+                if (isXSS) {
+                    result.innerHTML = "⚠️ Potential XSS Vulnerability Detected on this site!";
+                    result.style.color = "red";
+                } else {
+                    result.innerHTML = "✅ No XSS detected on this site.";
+                    result.style.color = "green";
+                }
+
+            } catch (error) {
+                result.innerHTML = "❌ Error fetching the website. The website may block requests.";
+                result.style.color = "red";
+                console.error(error);
+            }
+        }
+    </script>
+
+</body>
+</html>
